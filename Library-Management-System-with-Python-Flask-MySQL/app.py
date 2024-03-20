@@ -43,9 +43,22 @@ def login():
 
 @app.route("/dashboard", methods=['GET', 'POST'])
 def dashboard():
-    if 'loggedin' in session:
-        return render_template("dashboard.html")
-    return redirect(url_for('login'))
+     if 'loggedin' in session:
+        cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cursor.execute("SELECT COUNT(*) AS total_books FROM book;")
+        available_books = cursor.fetchone()['total_books']
+
+        cursor.execute("SELECT COUNT(*) AS available_books FROM book WHERE status = 'Available';")
+        # available_books = cursor.fetchone()['available_books']
+
+        cursor.execute("SELECT COUNT(*) AS returned_books FROM issued_book WHERE status = 'Returned';")
+        returned_books = cursor.fetchone()['returned_books']
+
+        cursor.execute("SELECT COUNT(*) AS issued_books FROM issued_book WHERE status = 'Issued';")
+        issued_books = cursor.fetchone()['issued_books']
+        total_books = available_books + issued_books
+        return render_template("dashboard.html", total_books=total_books, available_books=available_books, returned_books=returned_books, issued_books=issued_books)
+     return redirect(url_for('login'))
 
 
 @app.route("/users", methods=['GET', 'POST'])

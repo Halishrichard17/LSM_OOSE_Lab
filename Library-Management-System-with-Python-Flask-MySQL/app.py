@@ -46,7 +46,8 @@ def dashboard():
      if 'loggedin' in session:
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute("SELECT COUNT(*) AS total_books FROM book;")
-        available_books = cursor.fetchone()['total_books']
+        total_books =cursor.fetchone()['total_books']
+        
 
         cursor.execute("SELECT COUNT(*) AS available_books FROM book WHERE status = 'Available';")
         # available_books = cursor.fetchone()['available_books']
@@ -56,7 +57,7 @@ def dashboard():
 
         cursor.execute("SELECT COUNT(*) AS issued_books FROM issued_book WHERE status = 'Issued';")
         issued_books = cursor.fetchone()['issued_books']
-        total_books = available_books + issued_books
+        available_books =  total_books - issued_books
         return render_template("dashboard.html", total_books=total_books, available_books=available_books, returned_books=returned_books, issued_books=issued_books)
      return redirect(url_for('login'))
 
@@ -179,6 +180,9 @@ def register():
         email = request.form['email']
         cursor = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
         cursor.execute('SELECT * FROM user WHERE email = % s', (email, ))
+
+        cursor.execute("SELECT COUNT(*) AS total_users FROM user;")
+        total_users =cursor.fetchone()['total_users']
         account = cursor.fetchone()
         if account:
             mesage = 'Account already exists !'
@@ -188,12 +192,13 @@ def register():
             mesage = 'Please fill out the form !'
         else:
             cursor.execute(
-                'INSERT INTO user VALUES (NULL, % s, % s, % s)', (userName, email, password, ))
+                'INSERT INTO user VALUES (%s, NULL, % s, % s, % s ,%s)', ((total_users + 1),userName, email, password,"user" ))
             mysql.connection.commit()
             mesage = 'You have successfully registered !'
     elif request.method == 'POST':
         mesage = 'Please fill out the form !'
     return render_template('register.html', mesage=mesage)
+
 
 # Manage Books
 
